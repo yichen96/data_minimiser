@@ -6,4 +6,4 @@
 view the origin data "lifetime.txt" in histogram
 
 ## Task 2
-theoretical distribution is a convoluted with gaussian. purpose a $\tau$ value by drawing graph
+theoretical distribution is a convoluted with gaussian. purpose a \tau value by drawing graph
