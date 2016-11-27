@@ -32,8 +32,8 @@ def NLL(tau, time_list=t_m, sigma_list=sigma_m):
 
 def parabolicMin(func,xlist):
     '''Example:
-    >>> print pb.parabolic(math.cosh,[-1.2,1.2,1])
-    >>> print parabolicMin(NLL,[0.2,0.4,0.5])
+    >>> parabolicMin(math.cosh,[-1.2,1.2,1])
+    >>> parabolicMin(NLL,[0.2,0.4,0.5])
     '''
 
     while max(xlist)-min(xlist) > 1e-5:
@@ -55,3 +55,9 @@ def fmbackground(t, sigma):
 
 def ft(tau, signalfrac, t, sigma):
     return signalfrac*fmsignal(tau, t, sigma) + (1-signalfrac)*fmbackground(t, sigma)
+
+
+def curvature(function_array):
+    f1 = np.gradient(function_array)
+    f2 = np.gradient(f1)
+    return np.abs(f2/((1+f1**2)**1.5))
