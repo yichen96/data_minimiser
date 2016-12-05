@@ -16,7 +16,7 @@ for i in xrange(len(tau_l)):
 # plt.ylabel('NLL(tau)')
 # plt.show()
 
-min_tau,  min_NLL, final_list = pb.parabolicMin(pb.NLL, [0.2, 0.4, 0.5])
+min_tau,  min_NLL, final_xlist, final_ylist = pb.parabolicMin(pb.NLL, [0.2, 0.4, 0.5])
 print 'mintau',float('%.4g'%min_tau)
 tau_l = np.around(tau_l, decimals=4)
 NLL = np.around(NLL, decimals=4)
@@ -24,7 +24,9 @@ i = np.where(tau_l == float('%.4g'%min_tau))
 i = i[0][0]
 print i
 curvature = pb.curvature(NLL)
+derivative = pb.derivative2(NLL)
 print 'curvature is', curvature[i]
+print '2ndderivative', derivative[i]
 changed = np.around(min_NLL, decimals=4) + 0.5
 print changed
 
@@ -52,7 +54,31 @@ print k, tau_l[k]
 min tau = 0.4045
 curvature = 0.0005
 
+##currently all in picosecond
 NLL+0.5 --> taup = 0.4093 = tau_min + 0.0048
 --> taum = 0.3398 = tau_min - 0.0047'''
 
+# def Parabole(x, xlist, ylist):
+#     return ((x-xlist[1])*(x-xlist[2])/(xlist[0]-xlist[1])*(xlist[0]-xlist[2]))*ylist[0] \
+#     + ((x-xlist[0])*(x-xlist[2])/(xlist[1]-xlist[0])*(xlist[1]-xlist[2]))*ylist[1] \
+#     + ((x - xlist[0]) * (x - xlist[1]) / (xlist[2] - xlist[0]) * (xlist[2] - xlist[1])) * ylist[2]
+#
+# x = np.arange(-3,3,0.0001)
+# parabole = Parabole(x, final_xlist, final_ylist)
+# min_para = min(parabole)
+# derivative_2 = pb.derivative2(parabole)
+# min_deri = derivative_2[np.where(parabole == min(parabole))]
+# print min_deri
+# print np.sqrt(1/(4*min_deri))
+# print final_xlist
+
+def secondderiv_para(xlist, ylist):
+    return 2*(ylist[0]/(xlist[0]-xlist[1])*(xlist[0]-xlist[2])
+              + ylist[1]/(xlist[1]-xlist[0])*(xlist[1]-xlist[2])
+              + ylist[2]/(xlist[2]-xlist[0])*(xlist[2]-xlist[1]))
+
+parasecond = secondderiv_para(final_xlist, final_ylist)
+error = np.sqrt(1/(4*parasecond))
+print "parasecond", parasecond
+print "error", error
 
