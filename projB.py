@@ -26,8 +26,7 @@ def fmsignal(tau, t, sigma):
 
 
 def NLL(tau, time_list=t_m, sigma_list=sigma_m):
-    fmt = fmsignal(tau, time_list, sigma_list)
-    return np.sum(-np.log(fmt))
+    return np.sum(-np.log(fmsignal(tau, time_list, sigma_list)))
 
 
 def parabolicMin(func,xlist):
@@ -50,7 +49,7 @@ def parabolicMin(func,xlist):
 
 
 def fmbackground(t, sigma):
-    return sp.exp(-0.5*(t**2/sigma**2))/(sigma*math.sqrt(2*math.pi))
+    return sp.exp(-0.5*(t**2/sigma**2))/(sigma*np.sqrt(2*np.pi))
 
 
 def ft(tau, signalfrac, t, sigma):
@@ -68,7 +67,10 @@ def derivative2(function_array):
 
 
 def stderror(func):
+    '''supposed to be an automatic way to find error
+    revisit when all done. For the code to be better organised'''
     pass
 
-def NLL2D(tau,signalfrac):
-    pass
+
+def NLL2D(tau,signalfrac, t=t_m, sigma=sigma_m):
+    return np.sum(-np.log(ft(tau, signalfrac, t, sigma)))
