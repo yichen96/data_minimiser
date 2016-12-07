@@ -72,13 +72,10 @@ NLL+0.5 --> taup = 0.4093 = tau_min + 0.0048
 # print np.sqrt(1/(4*min_deri))
 # print final_xlist
 
-def secondderiv_para(xlist, ylist):
-    return 2*(ylist[0]/(xlist[0]-xlist[1])*(xlist[0]-xlist[2])
-              + ylist[1]/(xlist[1]-xlist[0])*(xlist[1]-xlist[2])
-              + ylist[2]/(xlist[2]-xlist[0])*(xlist[2]-xlist[1]))
+def curv(x,y):
+    d = (x[1]-x[0])*(x[2]-x[0])*(x[2]-x[1])
+    return (x[2]-x[1])*y[0]/d + (x[0]-x[2])*y[1]/d + (x[1]-x[0])*y[2]/d
 
-parasecond = secondderiv_para(final_xlist, final_ylist)
-error = np.sqrt(1/(4*parasecond))
-print "parasecond", parasecond
-print "error", error
-
+a = curv(final_xlist, final_ylist)
+print a
+print np.sqrt(1/(2*a))

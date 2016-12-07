@@ -35,7 +35,7 @@ def parabolicMin(func,xlist):
     >>> parabolicMin(NLL,[0.2,0.4,0.5])
     '''
 
-    while max(xlist)-min(xlist) > 1e-3:
+    while max(xlist)-min(xlist) >= 1e-5:
         ylist = [func(xlist[0]), func(xlist[1]), func(xlist[2])]
         upper = (xlist[2]**2 - xlist[1]**2)*ylist[0] + (xlist[0]**2 - xlist[2]**2)*ylist[1] + (xlist[1]**2 - xlist[0]**2)*ylist[2]
         lower = (xlist[2] - xlist[1])*ylist[0] + (xlist[0] - xlist[2])*ylist[1] + (xlist[1] - xlist[0])*ylist[2]
@@ -45,7 +45,7 @@ def parabolicMin(func,xlist):
             i = ylist.index(max(ylist))
             ylist[i] = y3
             xlist[i] = x3
-    return xlist[ylist.index(min(ylist))], min(ylist), xlist,ylist
+    return xlist[ylist.index(min(ylist))], min(ylist), xlist, ylist
 
 
 def fmbackground(t, sigma):
