@@ -22,7 +22,7 @@ t_m, sigma_m = readdata('lifetime.txt')
 def fmsignal(tau, t, sigma):
     return (1/(2*tau)) \
         * sp.exp((sigma**2/(2*tau**2))-(t/tau)) \
-        * erfc((1/math.sqrt(2))*((sigma/tau) - (t/sigma)))
+        * erfc((1/np.sqrt(2))*((sigma/tau) - (t/sigma)))
 
 
 def NLL(tau, time_list=t_m, sigma_list=sigma_m):
