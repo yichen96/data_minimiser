@@ -29,13 +29,22 @@ def NLL(tau, time_list=t_m, sigma_list=sigma_m):
     return np.sum(-np.log(fmsignal(tau, time_list, sigma_list)))
 
 
-def parabolicMin(func,xlist):
+def parabolicMin(func, xlist, tolerance=1e-5):
     '''Example:
     >>> parabolicMin(math.cosh,[-1.2,1.2,1])
+    (-0.0,
+ 1.0,
+ [-0.0, 1.359745106347053e-06, 7.118859805199238e-11],
+ [1.0, 1.0000000000009244, 1.0])
+
     >>> parabolicMin(NLL,[0.2,0.4,0.5])
+    (0.40454571849127174,
+ 6220.4468927881981,
+ [0.40454571849127174, 0.4045458573036621, 0.40454654592198747],
+ [6220.4468927881981, 6220.446892788651, 6220.4468928037604])
     '''
 
-    while max(xlist)-min(xlist) >= 1e-5:
+    while max(xlist)-min(xlist) >= tolerance:
         ylist = [func(xlist[0]), func(xlist[1]), func(xlist[2])]
         upper = (xlist[2]**2 - xlist[1]**2)*ylist[0] + (xlist[0]**2 - xlist[2]**2)*ylist[1] + (xlist[1]**2 - xlist[0]**2)*ylist[2]
         lower = (xlist[2] - xlist[1])*ylist[0] + (xlist[0] - xlist[2])*ylist[1] + (xlist[1] - xlist[0])*ylist[2]
