@@ -17,6 +17,7 @@ from __future__ import division
 import numpy as np
 import scipy as sp
 from scipy.special import erfc
+import numpy.linalg as la
 
 
 def read_data(filename):
@@ -55,15 +56,15 @@ def NLL(tau, time_list=t_m, sigma_list=sigma_m):
     return np.sum(-np.log(f_signal(tau, time_list, sigma_list)))
 
 
-def parabolicMin(func, xlist, tol=1e-5):
+def min_parabolic(func, xlist, tol=1e-5):
     """Example:
-    >>> parabolicMin(math.cosh,[-1.2,1.2,1])
+    >>> min_parabolic(math.cosh,[-1.2,1.2,1])
     (-0.0,
  1.0,
  [-0.0, 1.359745106347053e-06, 7.118859805199238e-11],
  [1.0, 1.0000000000009244, 1.0])
 
-    >>> parabolicMin(NLL,[0.2,0.4,0.5])
+    >>> min_parabolic(NLL,[0.2,0.4,0.5])
     (0.40454571849127174,
  6220.4468927881981,
  [0.40454571849127174, 0.4045458573036621, 0.40454654592198747],
@@ -87,8 +88,8 @@ def fmbackground(t, sigma):
     return sp.exp(-0.5*(t**2/sigma**2))/(sigma*np.sqrt(2*np.pi))
 
 
-def ft(tau, signalfrac, t, sigma):
-    return signalfrac * f_signal(tau, t, sigma) + (1 - signalfrac) * fmbackground(t, sigma)
+def ft(tau, signal_fraction, t, sigma):
+    return signal_fraction * f_signal(tau, t, sigma) + (1 - signal_fraction) * fmbackground(t, sigma)
 
 
 def curvature(function_array):
@@ -97,5 +98,48 @@ def curvature(function_array):
     return np.abs(f2/((1+f1**2)**1.5))
 
 
-def NLL2D(tau,signalfrac, t=t_m, sigma=sigma_m):
-    return np.sum(-np.log(ft(tau, signalfrac, t, sigma)))
+def NLL2D(tau, signal_fraction, t=t_m, sigma=sigma_m):
+    return np.sum(-np.log(ft(tau, signal_fraction, t, sigma)))
+
+
+def partial2D(func, x, delta=1e-5):
+    """central difference approximation"""
+    diff = 2*delta
+    return np.array([((func(x[0]+delta, x[1]) - func(x[0]-delta, x[1])) / diff),
+                     ((func(x[0], x[1]+delta) - func(x[0], x[1]-delta)) / diff)])
+
+
+def hessian2D(func, x, delta=1e-4):  # hessian2D based on function calls, 2n+4n^2/2 additional functions calls are needed.
+    d2f_dx2 = (-func(x[0] + 2 * delta, x[1]) + 16 * func(x[0] + delta, x[1]) - 30 * func(x[0], x[1])
+               + 16 * func(x[0] - delta, x[1]) - func(x[0] - 2 * delta, x[1])) / (12 * delta ** 2)
+    d2f_dy2 = (-func(x[0], x[1] + 2 * delta) + 16 * func(x[0], x[1] + delta) - 30 * func(x[0], x[1])
+               + 16 * func(x[0], x[1] - delta) - func(x[0], x[1] - 2 * delta)) / (12 * delta ** 2)
+    d2f_dxdy = (func(x[0] + delta, x[1] + delta) - func(x[0] + delta, x[1] - delta)
+                - func(x[0] - delta, x[1] + delta) + func(x[0] - delta, x[1] - delta)) / (4 * delta ** 2)
+    #same as d2f_dydx
+    return np.array([[d2f_dx2, d2f_dxdy], [d2f_dxdy, d2f_dy2]])
+
+
+def min_gradient_descent(func, x, alpha=1e-6, tol=1e-16, maxiter=1e5):
+    niter = 0
+    improved = True
+    while improved and niter < maxiter:
+        niter += 1
+        step = alpha*partial2D(func, x)
+        x -= step
+        if la.norm(step) < tol:
+            improved = False
+    return x, niter
+
+
+def min_newton(func, x, tol=1e-10, maxiter=100):
+    niter = 0
+    improved = True
+    while improved and niter < maxiter:
+        niter += 1
+        H = hessian2D(func, x)
+        d = np.dot(-la.inv(H), partial2D(func, x))
+        x += d
+        if la.norm(d) < tol:
+            improved = False
+    return x, niter

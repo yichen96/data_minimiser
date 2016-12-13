@@ -16,7 +16,7 @@ for i in xrange(len(tau_l)):
 # plt.ylabel('NLL(tau)')
 # plt.show()
 
-min_tau,  min_NLL, final_xlist, final_ylist = pb.parabolicMin(pb.NLL, [0.2, 0.4, 0.5])
+min_tau,  min_NLL, final_xlist, final_ylist = pb.min_parabolic(pb.NLL, [0.2, 0.4, 0.5])
 print 'mintau',float('%.4g'%min_tau)
 tau_l = np.around(tau_l, decimals=4)
 NLL = np.around(NLL, decimals=4)
