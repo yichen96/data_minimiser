@@ -99,6 +99,8 @@ def curvature(function_array):
 
 
 def NLL2D(tau, signal_fraction, t=t_m, sigma=sigma_m):
+    if signal_fraction > 1:
+        raise ValueError("The signal fraction is only defined between 0 and 1.")
     return np.sum(-np.log(ft(tau, signal_fraction, t, sigma)))
 
 
