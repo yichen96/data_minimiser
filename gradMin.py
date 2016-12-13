@@ -3,7 +3,7 @@ import numpy.linalg as la
 import numpy as np
 #from matplotlib import pyplot as plt
 # tau_l = np.arange(0.1,0.8,0.001)
-signalfrac_l = np.arange(0.1,1.001,0.01)
+# signalfrac_l = np.arange(0.1,1.001,0.01)
 # X, Y = np.meshgrid(tau_l, signalfrac_l)
 # Z = np.ndarray(shape=(signalfrac_l.size,tau_l.size))
 # P = np.ndarray(shape=(signalfrac_l.size,tau_l.size))
@@ -22,35 +22,7 @@ signalfrac_l = np.arange(0.1,1.001,0.01)
 
 # # print min_gradient_descent(pb.NLL2D, start)
 
-
-def hessian(func, x, delta=1e-4):  # hessian2D based on function calls, 2n+4n^2/2 additional functions calls are needed.
-    d2f_dx2 = (-func(x[0] + 2 * delta, x[1]) + 16 * func(x[0] + delta, x[1]) - 30 * func(x[0], x[1])
-               + 16 * func(x[0] - delta, x[1]) - func(x[0] - 2 * delta, x[1])) / (12 * delta ** 2)
-    d2f_dy2 = (-func(x[0], x[1] + 2 * delta) + 16 * func(x[0], x[1] + delta) - 30 * func(x[0], x[1])
-               + 16 * func(x[0], x[1] - delta) - func(x[0], x[1] - 2 * delta)) / (12 * delta ** 2)
-    d2f_dxdy = (func(x[0] + delta, x[1] + delta) - func(x[0] + delta, x[1] - delta)
-                - func(x[0] - delta, x[1] + delta) + func(x[0] - delta, x[1] - delta)) / (4 * delta ** 2)
-    #same as d2f_dydx
-    return np.array([[d2f_dx2, d2f_dxdy], [d2f_dxdy, d2f_dy2]])
-
-
-
-start = np.array([0.5,0.8])
-def newtonMin(func, x, tol=1e-10, maxiter=100):
-    niter = 0
-    improved = True
-    while improved and niter < maxiter:
-        niter += 1
-        H = hessian(func, x)
-        d = np.dot(-la.inv(H), pb.partial2D(func, x))
-        x += d
-        if la.norm(d) < tol:
-            improved = False
-    return x, niter
-print newtonMin(pb.NLL2D, start)
-#
-# def grad2(array):
-#     return np.gradient(np.gradient(array))
+# print newtonMin(pb.NLL2D, start)
 #
 # NLL2d = np.empty(signalfrac_l.size)
 # for i in xrange(len(signalfrac_l)):
@@ -60,3 +32,33 @@ print newtonMin(pb.NLL2D, start)
 # print x_prime
 # x_prime_p = pb.partial2D(pb.NLL2D, x_prime)
 # print x_prime_p
+
+
+# def min_quasi_newton(func, x, alpha=1e-6, tol=1e-10, maxiter=1e4):
+#     niter = 0
+#     improved = True
+#     G = np.identity(2)
+#     print x, niter
+#     while improved and niter < maxiter:
+#         niter += 1
+#         x_prime = pb.partial2D(func, x)
+#         step = alpha * np.dot(G, x_prime)
+#         x -= step
+#         if la.norm(step) < tol:
+#             improved = False
+#         gamma = pb.partial2D(func, x) - x_prime
+#         G += np.outer(step, step) / np.dot(gamma, step) \
+#             - np.dot(np.dot(G, np.outer(step, step)), G) / np.dot(np.dot(gamma, G), gamma)
+#     return x, niter
+
+
+start1 = np.array([0.3, 0.9])
+start2 = np.array([0.3, 0.9])
+x2, n2 = pb.min_quasi_newton(pb.NLL2D, start2, alpha=1e-5, tol=1e-8, maxiter=1e4)
+x, n = pb.min_gradient_descent(pb.NLL2D, start1, alpha=1e-5, tol=1e-8, maxiter=1e4)
+
+##LOCAL VARIABLE PROBLEM!! why when start are the same the second function inherite all variables from the previous function??
+
+print x, n
+print x2, n2
+

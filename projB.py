@@ -120,13 +120,14 @@ def hessian2D(func, x, delta=1e-4):  # hessian2D based on function calls, 2n+4n^
     return np.array([[d2f_dx2, d2f_dxdy], [d2f_dxdy, d2f_dy2]])
 
 
-def min_gradient_descent(func, x, alpha=1e-6, tol=1e-16, maxiter=1e5):
+def min_gradient_descent(func, x, alpha=1e-6, tol=1e-10, maxiter=1e4):
     niter = 0
     improved = True
     while improved and niter < maxiter:
         niter += 1
         step = alpha*partial2D(func, x)
         x -= step
+        print x, step, niter
         if la.norm(step) < tol:
             improved = False
     return x, niter
@@ -138,8 +139,26 @@ def min_newton(func, x, tol=1e-10, maxiter=100):
     while improved and niter < maxiter:
         niter += 1
         H = hessian2D(func, x)
-        d = np.dot(-la.inv(H), partial2D(func, x))
-        x += d
-        if la.norm(d) < tol:
+        step = np.dot(-la.inv(H), partial2D(func, x))
+        x += step
+        if la.norm(step) < tol:
             improved = False
+    return x, niter
+
+
+def min_quasi_newton(func, x, alpha=1e-6, tol=1e-8, maxiter=1e4):
+    niter = 0
+    improved = True
+    G = np.identity(2)
+    while improved and niter < maxiter:
+        niter += 1
+        x_prime = partial2D(func, x)
+        step = alpha * np.dot(G, x_prime)
+        x -= step
+        print x, niter
+        if la.norm(step) < tol:
+            improved = False
+        gamma = partial2D(func, x) - x_prime
+        G += np.outer(step, step) / np.dot(gamma, step) \
+            - np.dot(np.dot(G, np.outer(step, step)), G) / np.dot(np.dot(gamma, G), gamma)
     return x, niter
