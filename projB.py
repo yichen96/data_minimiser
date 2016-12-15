@@ -291,14 +291,9 @@ def min_newton(func, start, tol=1e-10, maxiter=100, bound_mode=True):
         H = _hessian2D(func, x)
         step = np.dot(-la.inv(H), _partial2D(func, x))
         if bound_mode:
-            if step[1] > 0.:
-                up_diff = 1. - x[1]
-                while step[1] > up_diff:
-                    step[1] *= 0.9
-            else:
-                low_diff = x[1]
-                while -step[1] > low_diff:
-                    step[1] *= 0.9
+            up_diff = 1. - x[1]
+            while step[1] > up_diff:
+                step[1] *= 0.9
         x += step
         print x, step
         print H

@@ -16,19 +16,19 @@ for i in xrange(len(tau_l)):
 # plt.ylabel('NLL(tau)')
 # plt.show()
 
-min_tau,  min_NLL, final_xlist, final_ylist = pb.min_parabolic(pb.NLL, [0.2, 0.4, 0.5])
-print 'mintau',float('%.4g'%min_tau)
-tau_l = np.around(tau_l, decimals=4)
-NLL = np.around(NLL, decimals=4)
-i = np.where(tau_l == float('%.4g'%min_tau))
-i = i[0][0]
-print i
-curvature = pb.curvature(NLL)
-derivative = pb.derivative2(NLL)
-print 'curvature is', curvature[i]
-print '2ndderivative', derivative[i]
-changed = np.around(min_NLL, decimals=4) + 0.5
-print changed
+# min_tau,  min_NLL, final_xlist, final_ylist = pb.min_parabolic(pb.NLL, [0.2, 0.4, 0.5])
+# print 'mintau',float('%.4g'%min_tau)
+# tau_l = np.around(tau_l, decimals=4)
+# NLL = np.around(NLL, decimals=4)
+# i = np.where(tau_l == float('%.4g'%min_tau))
+# i = i[0][0]
+# print i
+# curvature = pb.curvature(NLL)
+# derivative = pb.derivative2(NLL)
+# print 'curvature is', curvature[i]
+# print '2ndderivative', derivative[i]
+# changed = np.around(min_NLL, decimals=4) + 0.5
+# print changed
 
 
 def findupper(array, starti, value):
