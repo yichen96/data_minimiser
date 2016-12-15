@@ -134,10 +134,20 @@ def f_total(tau, signal_fraction, t, sigma):
         If signal_fraction exceeds 1.
     """
     if signal_fraction > 1. or signal_fraction < 0.:
-        raise ValueError("The signal fraction is only defined between 0 and 1.")
+        raise ValueError("The signal fraction is only defined between 0 and 1")
     f_t = signal_fraction * f_signal(tau, t, sigma) + (1 - signal_fraction) * _noise(t, sigma)
     return f_t
 
+
+def nll(func, args=()):
+    L = np.sum(-np.log(func(args)))
+    if np.isnan(L):
+        raise ValueError('Result is not a number')
+    return L
+
+
+def nll1d(tau, time_list=t_m, sigma_list=sigma_m):
+    return nll(f_signal())
 
 def NLL(tau, time_list=t_m, sigma_list=sigma_m):
     """Negative log likelihood of f_signal function (ref. help(f_signal) ) to estimate tau.
@@ -158,7 +168,7 @@ def NLL(tau, time_list=t_m, sigma_list=sigma_m):
     """
     L = np.sum(-np.log(f_signal(tau, time_list, sigma_list)))
     if np.isnan(L):
-        raise ValueError('Result is not a number.')
+        raise ValueError('Result is not a number')
     return L
 
 
