@@ -157,6 +157,8 @@ def NLL(tau, time_list=t_m, sigma_list=sigma_m):
         Likelihood of tau.
     """
     L = np.sum(-np.log(f_signal(tau, time_list, sigma_list)))
+    if np.isnan(L):
+        raise ValueError('Result is not a number.')
     return L
 
 
@@ -180,6 +182,8 @@ def NLL2D(tau, signal_fraction, time_list=t_m, sigma_list=sigma_m):
         Likelihood of tau and signal_fraction.
     """
     L = np.sum(-np.log(f_total(tau, signal_fraction, time_list, sigma_list)))
+    if np.isnan(L):
+        raise ValueError('Result is not a number.')
     return L
 
 
@@ -282,7 +286,8 @@ def min_gradient_descent(func, start, alpha=1e-6, tol=1e-10, maxiter=1e4):
     return x, niter
 
 
-def min_newton(func, start, tol=1e-10, maxiter=100, bound_mode=True):
+def min_newton(func, start, tol=1e-10, maxiter=100, bound_mode=False):
+    """input dtype=float"""
     x = copy.copy(start)
     niter = 0
     improved = True
@@ -339,6 +344,24 @@ def _curv(x, y):
     return (x[2]-x[1])*y[0]/d + (x[0]-x[2])*y[1]/d + (x[1]-x[0])*y[2]/d
 
 
-def std_error(x, y):
-    a = _curv(x, y)
-    return np.sqrt(1/(2*a))
+def std_error(func, x, method='curvature', decimals=4): #x being a list
+    x_min, y_min, xlist, ylist = min_parabolic(func, x)
+    if method == 'curvature':
+        a = _curv(xlist, ylist)
+        return np.around(np.sqrt(1/(2*a)), decimals=decimals)
+    elif method == 'scan':
+        y_min_up = copy.copy(y_min)
+        y_min_down = copy.copy(y_min)
+        x_up = copy.copy(x_min)
+        x_down = copy.copy(x_min)
+        while y_min_up < y_min + 0.5:
+            x_up += 1e-5
+            y_min_up = func(x_up)
+        while y_min_down < y_min + 0.5:
+            x_down -= 1e-5
+            y_min_down = func(x_down)
+        x_p = x_up - x_min
+        x_n = x_min - x_down
+        return np.around(x_p, decimals=decimals), np.around(x_n,  decimals=decimals)
+    else:
+        raise ValueError('Unknown method %s' % method)
