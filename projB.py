@@ -282,16 +282,26 @@ def min_gradient_descent(func, start, alpha=1e-6, tol=1e-10, maxiter=1e4):
     return x, niter
 
 
-def min_newton(func, start, tol=1e-10, maxiter=100):
+def min_newton(func, start, tol=1e-10, maxiter=100, bound_mode=True):
     x = copy.copy(start)
     niter = 0
     improved = True
     while improved and niter < maxiter:
         niter += 1
         H = _hessian2D(func, x)
-        step = np.dot(-la.inv(H), _partial2D(func, x)) ##SET A CONDITION TO SET THE a BACK TO 1 MAYBE BY MINUS 1E-4
+        step = np.dot(-la.inv(H), _partial2D(func, x))
+        if bound_mode:
+            if step[1] > 0.:
+                up_diff = 1. - x[1]
+                while step[1] > up_diff:
+                    step[1] *= 0.9
+            else:
+                low_diff = x[1]
+                while -step[1] > low_diff:
+                    step[1] *= 0.9
         x += step
-        print x, H, step
+        print x, step
+        print H
         if la.norm(step) < tol:
             improved = False
     return x, niter
