@@ -3,21 +3,39 @@ Purpose: contains functions necessary for 1D and 2D function minimisation to est
 Author: Yichen Liu
 Created: 23/11/2016
 
+Important Notes
+---------------
+- This module requires numpy and scipy packages to run, and the functions in this module performs the best
+  when they are used on numpy.array types of data.
+- For practicality, this module automatically intake meson D^0 measurements data from file 'lifetime.txt',
+  ensure this file is in the same directory as this module.
+
 Functions
 ----------
 - read_data: read in .txt file of data in two columns.
--
+- f_signal:
+- f_total:
+- NLL:
+- NLL2D:
+- min_parabolic:
+- min_gradient_descent:
+- min_newton:
+- min_quasi_newton:
+- std_error:
 
-Notes
------
-This module requires numpy and scipy packages to run, and therefore the functions in this module performs the best when
-they are used on numpy.array types of data.
+ASK JOJO IF SHOULD MERGE TWO NLL FUNCTIONS!!!!!!
 """
 from __future__ import division
+
+__all__ = ['read_data', 'f_signal', 'f_total', 'NLL', 'NLL2D',
+           'min_parabolic', 'min_gradient_descent', 'min_quasi_newton',
+           'min_newton', 'std_error', 't_m', 'sigma_m']
+
 import numpy as np
 import scipy as sp
 from scipy.special import erfc
 import numpy.linalg as la
+import copy
 
 
 def read_data(filename):
@@ -26,7 +44,7 @@ def read_data(filename):
     Parameters
     ----------
     filename : string
-        The name of the file with extension as a string. e.g. 'lifetime.txt'
+        Name of the file with extension as a string. e.g. 'lifetime.txt'
 
     Returns
     -------
@@ -43,17 +61,126 @@ def read_data(filename):
             sigma.append(float(line.split()[1]))
     return np.array(t), np.array(sigma)
 
-t_m, sigma_m = read_data('lifetime.txt')  # permit direct access data from liftime.txt using projB.t_m, projB.sigma_m
+
+t_m, sigma_m = read_data('lifetime.txt')  # permit direct access to lifetime.txt data
 
 
 def f_signal(tau, t, sigma):
-    return (1/(2*tau)) \
+    """Probability density function of the decay signal. Obtained by convolution of
+    exponential distribution of the decay (time t, average time tau)
+    and Gaussian function (due to detection) of width sigma.
+
+    Parameters
+    ----------
+    tau : float or 1D array
+        Average decay time.
+    t : float or 1D array
+        Measured decay time.
+    sigma : float or 1D array
+        Measurement error.
+
+    Returns
+    -------
+    f_s : float or 1D array
+        Probability density associated with the input parameters.
+    """
+    f_s = (1/(2*tau)) \
         * sp.exp((sigma**2/(2*tau**2))-(t/tau)) \
         * erfc((1/np.sqrt(2))*((sigma/tau) - (t/sigma)))
+    return f_s
+
+
+def _noise(t, sigma):
+    """Noise is the convolution of a delta function with a Gaussian (due to detection), it's just the Gaussian itself.
+
+    Parameters
+    ----------
+    t : float or 1D array
+        Measured decay time.
+    sigma : float or 1D array
+        Measurement error.
+
+    Returns
+    -------
+    Gaussian : float or 1D array
+        Probability density associated with the input parameters.
+    """
+    return sp.exp(-0.5*(t**2/sigma**2))/(sigma*np.sqrt(2*np.pi))
+
+
+def f_total(tau, signal_fraction, t, sigma):
+    """Probability density function of the decay signal including background noise.
+    Obtained by summing a fraction of PDF of pure signal and a (1-fraction) background noise.
+
+    Parameters
+    ----------
+    tau : float or 1D array
+        Average decay time.
+    signal_fraction : float or 1D array
+        Proportion of signal in detection. only defined between 0 and 1.
+    t : float or 1D array
+        Measured decay time.
+    sigma : float or 1D array
+        Measurement error.
+
+    Returns
+    -------
+    f_t : float or 1D array
+        Probability density associated with the input parameters.
+
+    Raises
+    ------
+    ValueError
+        If signal_fraction exceeds 1.
+    """
+    if signal_fraction > 1. or signal_fraction < 0.:
+        raise ValueError("The signal fraction is only defined between 0 and 1.")
+    f_t = signal_fraction * f_signal(tau, t, sigma) + (1 - signal_fraction) * _noise(t, sigma)
+    return f_t
 
 
 def NLL(tau, time_list=t_m, sigma_list=sigma_m):
-    return np.sum(-np.log(f_signal(tau, time_list, sigma_list)))
+    """Negative log likelihood of f_signal function (ref. help(f_signal) ) to estimate tau.
+
+    Parameters
+    ----------
+    tau : float
+        Average decay time.
+    time_list : 1D array, optional
+        Measured decay time. default use data obtained from lifetime.txt.
+    sigma_list : 1D array, optional
+        Measurement error. default use data obtained from lifetime.txt.
+
+    Returns
+    -------
+    L : float
+        Likelihood of tau.
+    """
+    L = np.sum(-np.log(f_signal(tau, time_list, sigma_list)))
+    return L
+
+
+def NLL2D(tau, signal_fraction, time_list=t_m, sigma_list=sigma_m):
+    """Negative log likelihood of f_total function (ref. help(f_total) ) to estimate tau.
+
+    Parameters
+    ----------
+    tau : float
+        Average decay time.
+    signal_fraction : float
+        Proportion of signal in detection. only defined between 0 and 1.
+    time_list : 1D array, optional
+        Measured decay time. default use data obtained from lifetime.txt.
+    sigma_list : 1D array, optional
+        Measurement error. default use data obtained from lifetime.txt.
+
+    Returns
+    -------
+    L : float
+        Likelihood of tau and signal_fraction.
+    """
+    L = np.sum(-np.log(f_total(tau, signal_fraction, time_list, sigma_list)))
+    return L
 
 
 def min_parabolic(func, xlist, tol=1e-5):
@@ -84,34 +211,52 @@ def min_parabolic(func, xlist, tol=1e-5):
     return xlist[ylist.index(min(ylist))], min(ylist), xlist, ylist
 
 
-def fmbackground(t, sigma):
-    return sp.exp(-0.5*(t**2/sigma**2))/(sigma*np.sqrt(2*np.pi))
+def _partial2D(func, x, delta=1e-5):
+    """Partial derivative for a function of two parameters i.e. f(x_0, x_1)
+    using central difference approximation.
 
+    Parameters
+    ----------
+    func : callable
+        Objective function.
+    x : 1D array of two elements
+        Point at which the gradient is returned. e.g. numpy.array([x_0, x_1])
+    delta : float, optional
+        Step size in the central difference approximation, in both x_0 and x_1 directions.
 
-def ft(tau, signal_fraction, t, sigma):
-    return signal_fraction * f_signal(tau, t, sigma) + (1 - signal_fraction) * fmbackground(t, sigma)
-
-
-def curvature(function_array):
-    f1 = np.gradient(function_array)
-    f2 = np.gradient(f1)
-    return np.abs(f2/((1+f1**2)**1.5))
-
-
-def NLL2D(tau, signal_fraction, t=t_m, sigma=sigma_m):
-    if signal_fraction > 1:
-        raise ValueError("The signal fraction is only defined between 0 and 1.")
-    return np.sum(-np.log(ft(tau, signal_fraction, t, sigma)))
-
-
-def partial2D(func, x, delta=1e-5):
-    """central difference approximation"""
+    Returns
+    -------
+    gradient : 1D array of two elements
+        Gradient at x of func.
+    """
     diff = 2*delta
-    return np.array([((func(x[0]+delta, x[1]) - func(x[0]-delta, x[1])) / diff),
-                     ((func(x[0], x[1]+delta) - func(x[0], x[1]-delta)) / diff)])
+    gradient = np.array([((func(x[0]+delta, x[1]) - func(x[0]-delta, x[1])) / diff),
+                        ((func(x[0], x[1]+delta) - func(x[0], x[1]-delta)) / diff)])
+    return gradient
 
 
-def hessian2D(func, x, delta=1e-4):  # hessian2D based on function calls, 2n+4n^2/2 additional functions calls are needed.
+def _hessian2D(func, x, delta=1e-4):
+    """2x2 Hessian for a function of two parameters i.e. f(x_0, x_1)
+    using central difference approximation. Thus 2n+4n^2/2 additional functions calls are needed.
+
+    Parameters
+    ----------
+    func : callable
+        Objective function.
+    x : 1D array of two elements
+        Point at which the gradient is returned. e.g. numpy.array([x_0, x_1])
+    delta : float, optional
+        Step size in the central difference approximation, in both x_0 and x_1 directions.
+
+    Returns
+    -------
+    H : 2x2 numpy array
+        Hessian at x of func.
+
+    Notes
+    -----
+    Assumed df/dxdy is same as df/dydx, which is true for well behaved function, i.e. almost all functions.
+    """
     d2f_dx2 = (-func(x[0] + 2 * delta, x[1]) + 16 * func(x[0] + delta, x[1]) - 30 * func(x[0], x[1])
                + 16 * func(x[0] - delta, x[1]) - func(x[0] - 2 * delta, x[1])) / (12 * delta ** 2)
     d2f_dy2 = (-func(x[0], x[1] + 2 * delta) + 16 * func(x[0], x[1] + delta) - 30 * func(x[0], x[1])
@@ -122,12 +267,14 @@ def hessian2D(func, x, delta=1e-4):  # hessian2D based on function calls, 2n+4n^
     return np.array([[d2f_dx2, d2f_dxdy], [d2f_dxdy, d2f_dy2]])
 
 
-def min_gradient_descent(func, x, alpha=1e-6, tol=1e-10, maxiter=1e4):
+def min_gradient_descent(func, start, alpha=1e-6, tol=1e-10, maxiter=1e4):
+    x = copy.copy(start)
     niter = 0
     improved = True
     while improved and niter < maxiter:
         niter += 1
-        step = alpha*partial2D(func, x)
+        print _partial2D(func, x)
+        step = alpha * _partial2D(func, x)
         x -= step
         print x, step, niter
         if la.norm(step) < tol:
@@ -135,32 +282,58 @@ def min_gradient_descent(func, x, alpha=1e-6, tol=1e-10, maxiter=1e4):
     return x, niter
 
 
-def min_newton(func, x, tol=1e-10, maxiter=100):
+def min_newton(func, start, tol=1e-10, maxiter=100):
+    x = copy.copy(start)
     niter = 0
     improved = True
     while improved and niter < maxiter:
         niter += 1
-        H = hessian2D(func, x)
-        step = np.dot(-la.inv(H), partial2D(func, x))
+        H = _hessian2D(func, x)
+        step = np.dot(-la.inv(H), _partial2D(func, x)) ##SET A CONDITION TO SET THE a BACK TO 1 MAYBE BY MINUS 1E-4
         x += step
+        print x, H, step
         if la.norm(step) < tol:
             improved = False
     return x, niter
 
 
-def min_quasi_newton(func, x, alpha=1e-6, tol=1e-8, maxiter=1e4):
+def min_quasi_newton(func, start, alpha=1e-6, tol=1e-8, maxiter=1e4):
+    x = copy.copy(start)
     niter = 0
     improved = True
     G = np.identity(2)
     while improved and niter < maxiter:
         niter += 1
-        x_prime = partial2D(func, x)
-        step = alpha * np.dot(G, x_prime)
-        x -= step
-        print x, niter
+        x_prime = _partial2D(func, x)
+        step = - alpha * np.dot(x_prime, G)
+        x += step
         if la.norm(step) < tol:
             improved = False
-        gamma = partial2D(func, x) - x_prime
+        gamma = _partial2D(func, x) - x_prime
         G += np.outer(step, step) / np.dot(gamma, step) \
-            - np.dot(np.dot(G, np.outer(step, step)), G) / np.dot(np.dot(gamma, G), gamma)
+            - np.dot(G, np.dot(np.outer(step, step), G)) / np.dot(gamma, np.dot(G, gamma))
     return x, niter
+
+
+def _curv(x, y):
+    """Curvature of Lagrange second polynomial, i.e. the second order derivative. Calculated analytically.
+
+    Parameters
+    ----------
+    x : list of three elements
+        Three points that was used to estimate the polynomial. e.g. [x_0, x_1, x_2]
+    y : list of three elements
+        Correspondent f(x).
+
+    Returns
+    -------
+    c : float
+        Curvature of the parabola.
+    """
+    d = (x[1]-x[0])*(x[2]-x[0])*(x[2]-x[1])
+    return (x[2]-x[1])*y[0]/d + (x[0]-x[2])*y[1]/d + (x[1]-x[0])*y[2]/d
+
+
+def std_error(x, y):
+    a = _curv(x, y)
+    return np.sqrt(1/(2*a))
