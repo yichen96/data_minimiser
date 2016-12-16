@@ -139,15 +139,19 @@ def f_total(tau, signal_fraction, t, sigma):
     return f_t
 
 
-def nll(func, args=()):
-    L = np.sum(-np.log(func(args)))
+def nll(func, *args):
+    L = np.sum(-np.log(func(*args)))
     if np.isnan(L):
         raise ValueError('Result is not a number')
     return L
 
 
 def nll1d(tau, time_list=t_m, sigma_list=sigma_m):
-    return nll(f_signal())
+    return nll(f_signal, tau, time_list, sigma_list)
+
+
+def nll2d(tau, signal_fraction, time_list=t_m, sigma_list=sigma_m):
+    return nll(f_total, tau, signal_fraction, time_list, sigma_list)
 
 def NLL(tau, time_list=t_m, sigma_list=sigma_m):
     """Negative log likelihood of f_signal function (ref. help(f_signal) ) to estimate tau.
@@ -197,7 +201,7 @@ def NLL2D(tau, signal_fraction, time_list=t_m, sigma_list=sigma_m):
     return L
 
 
-def min_parabolic(func, xlist, tol=1e-5):
+def min_parabolic(func, start, tol=1e-5):
     """Example:
     >>> min_parabolic(math.cosh,[-1.2,1.2,1])
     (-0.0,
@@ -211,9 +215,10 @@ def min_parabolic(func, xlist, tol=1e-5):
  [0.40454571849127174, 0.4045458573036621, 0.40454654592198747],
  [6220.4468927881981, 6220.446892788651, 6220.4468928037604])
     """
-
-    while max(xlist)-min(xlist) >= tol:
+    xlist = copy.copy(start)
+    while max(xlist)-min(xlist) > tol:
         ylist = [func(xlist[0]), func(xlist[1]), func(xlist[2])]
+        print ylist
         upper = (xlist[2]**2 - xlist[1]**2)*ylist[0] + (xlist[0]**2 - xlist[2]**2)*ylist[1] + (xlist[1]**2 - xlist[0]**2)*ylist[2]
         lower = (xlist[2] - xlist[1])*ylist[0] + (xlist[0] - xlist[2])*ylist[1] + (xlist[1] - xlist[0])*ylist[2]
         x3 = 0.5 * (upper/lower)
@@ -375,3 +380,6 @@ def std_error(func, x, method='curvature', decimals=4): #x being a list
         return np.around(x_p, decimals=decimals), np.around(x_n,  decimals=decimals)
     else:
         raise ValueError('Unknown method %s' % method)
+
+#print min_parabolic(nll1d, [0.4,0.42,0.39], 1e-5, t_m, sigma_m)
+#print std_error(nll1d, [0.39, 0.4, 0.41])

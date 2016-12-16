@@ -16,7 +16,7 @@ labels = []
 for tau_i in tau_l:
     fmt = np.empty(t_test.size)
     for i in xrange(t_test.size):
-        fmt[i] = pb.fm2(tau_i, t_test[i], sigma_test)
+        fmt[i] = pb.f_signal(tau_i, t_test[i], sigma_test)
     plt.plot(t_test, fmt)
     labels.append(r'$\tau = %s$' % tau_i)
 plt.xlim(-2, 6)
@@ -27,8 +27,11 @@ plt.show()
 tau = 0.52
 # check if integral independent of sigma
 sigma_l = np.arange(0.01, 0.5, 0.05)
+integrate = []
 for sigma in sigma_l:
     fmt = np.empty(t_test.size)
     for i in xrange(t_test.size):
-        fmt[i] = pb.fm2(tau, t_test[i], sigma)
-    print np.sum((fmt*0.001))
+        fmt[i] = pb.f_signal(tau, t_test[i], sigma)
+    integrate.append(np.sum((fmt*0.001)))
+ii = np.around(integrate)
+print ii
