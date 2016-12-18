@@ -2,10 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import projB as pb
-import matplotlib as mpl
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
+
 tau_list = np.arange(0.1,1,0.01)
 signalfrac_list = np.arange(0.1,1,0.01)
 NLL2D = np.ndarray(shape=(tau_list.size,signalfrac_list.size))

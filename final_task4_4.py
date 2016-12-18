@@ -47,7 +47,7 @@ CS = plt.contourf(X, Y, Z, levels=levels, alpha=0.3, colors='g')
 green_patch = mpatches.Patch(color='green', alpha=0.3, label=r'$1 \sigma$ area determined from NLL')
 black_patch = mpatches.Patch(facecolor='white', edgecolor='black', label=r'$1 \sigma$ area delimited by error bars')
 
-minimum, = plt.plot(min_tau, min_signal_fraction, 'ro', label='minimum where NLL = %.1f' % min_NLL)
+minimum, = plt.plot(min_tau, min_signal_fraction, 'ro', label='Unique minimum')#where NLL = %.1f' % min_NLL)
 plt.annotate('minimum at (%.3f, %.3f)' % (min_tau, min_signal_fraction), xy=(0.4052, 0.984), fontsize=13)
 
 asymmetric_error_tau = np.array([np.array([error_tau_n]), np.array([error_tau_p])])
@@ -62,7 +62,7 @@ plt.vlines(error_tau_coord[0][0][1], error_sigfrac_coord[0][1][0], error_sigfrac
 plt.xlim(0.4, 0.42)
 plt.ylim(0.97, 1)
 plt.xlabel(r'$\tau$ (picosecond)', fontsize=16)
-plt.ylabel('signal fraction', fontsize=16)
+plt.ylabel('Signal fraction', fontsize=16)
 plt.legend(numpoints=1, fontsize=15, handles=[minimum, green_patch, black_patch])
 plt.title('Standard Deviation of the Average Lifetime and Signal Fraction')
 plt.show()
