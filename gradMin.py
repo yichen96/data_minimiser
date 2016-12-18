@@ -66,5 +66,5 @@ def f(x, y):
     return (x-2)**2 + (y-2)**2
 
 #print pb.min_gradient_descent(pb.NLL2D, np.array([0.4, 0.8]), alpha=1e-3, tol=1e-8, maxiter=1e4)
-print pb.min_newton(f, np.array([6., 1.]), tol=1e-8, maxiter=1e4)
+print pb.min_newton(pb.NLL2D, np.array([0.5, 0.9]), tol=1e-8, maxiter=1e4, bound_mode=True)
 

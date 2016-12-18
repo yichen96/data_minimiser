@@ -24,20 +24,26 @@ for i in xrange(1000, time_list.size + 1, truncation):
     n.append(len(t))
     e = pb.std_error(nll, [0.38, 0.4, 0.42])
     error.append(e)
-    print i
 
 ln_n = np.log(n)
 ln_e = np.log(error)
 slope, intercept, r_value, p_value, std_err = stats.linregress(ln_n, ln_e)
 
 want = np.log(1e-3)
+result = (want - intercept) / slope
+print result
 x_i = np.arange(4.5, 14, 0.1)
 line = slope*x_i+intercept
-plt.plot(ln_n, ln_e, 'bo')
-plt.plot(x_i, line, 'r-')
-plt.axhline(y=want)
-plt.xlabel('n')
-plt.ylabel('error')
-plt.xlim(6.6, 12.8)
-plt.ylim(-7.3, -4)
+
+
+plt.plot(ln_n, ln_e, 'b.', label=r'$\ln{\sigma}$')
+plt.plot(x_i, line, 'r-', label='Linear Fit')
+# plt.axhline(y=want)
+# plt.plot(result, want, 'ko')
+plt.xlabel(r'$\ln{n}$')
+plt.ylabel(r'$\ln{\sigma}$')
+plt.text(7.6, -4.5, r'$\ln{\sigma} = %.2f \ln{n} %.2f $' % (slope, intercept), fontsize=19)
+plt.xlim(6.8, 9.5)
+plt.ylim(-5.5, -4)
+plt.legend()
 plt.show()

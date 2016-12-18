@@ -33,5 +33,4 @@ for sigma in sigma_l:
     for i in xrange(t_test.size):
         fmt[i] = pb.f_signal(tau, t_test[i], sigma)
     integrate.append(np.sum((fmt*0.001)))
-ii = np.around(integrate)
-print ii
+print integrate

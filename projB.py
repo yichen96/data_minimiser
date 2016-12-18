@@ -133,7 +133,7 @@ def f_total(tau, signal_fraction, t, sigma):
     ValueError
         If signal_fraction exceeds 1.
     """
-    if signal_fraction > 1. or signal_fraction < 0.:
+    if signal_fraction > 1.0001 or signal_fraction < 0.:
         raise ValueError("The signal fraction is only defined between 0 and 1")
     f_t = signal_fraction * f_signal(tau, t, sigma) + (1 - signal_fraction) * _noise(t, sigma)
     return f_t
@@ -203,7 +203,7 @@ def NLL2D(tau, signal_fraction, time_list=t_m, sigma_list=sigma_m):
 
 def min_parabolic(func, start, tol=1e-5):
     """Example:
-    >>> min_parabolic(math.cosh,[-1.2,1.2,1])
+    >>> min_parabolic(np.cosh,[-1.2,1.2,1])
     (-0.0,
  1.0,
  [-0.0, 1.359745106347053e-06, 7.118859805199238e-11],
@@ -218,7 +218,6 @@ def min_parabolic(func, start, tol=1e-5):
     xlist = copy.copy(start)
     while max(xlist)-min(xlist) > tol:
         ylist = [func(xlist[0]), func(xlist[1]), func(xlist[2])]
-        print ylist
         upper = (xlist[2]**2 - xlist[1]**2)*ylist[0] + (xlist[0]**2 - xlist[2]**2)*ylist[1] + (xlist[1]**2 - xlist[0]**2)*ylist[2]
         lower = (xlist[2] - xlist[1])*ylist[0] + (xlist[0] - xlist[2])*ylist[1] + (xlist[1] - xlist[0])*ylist[2]
         x3 = 0.5 * (upper/lower)
@@ -288,22 +287,26 @@ def _hessian2D(func, x, delta=1e-4):
 
 def min_gradient_descent(func, start, alpha=1e-6, tol=1e-10, maxiter=1e4):
     x = copy.copy(start)
+    path = [start]
     niter = 0
     improved = True
     while improved and niter < maxiter:
+
         niter += 1
-        print _partial2D(func, x)
         step = alpha * _partial2D(func, x)
         x -= step
-        print x, step, niter
+        path.append(copy.copy(x))
+        # print x, niter, step, path
+
         if la.norm(step) < tol:
             improved = False
-    return x, niter
+    return x, niter, np.array(path)
 
 
 def min_newton(func, start, tol=1e-10, maxiter=100, bound_mode=False):
     """input dtype=float"""
     x = copy.copy(start)
+    path = [start]
     niter = 0
     improved = True
     while improved and niter < maxiter:
@@ -315,15 +318,17 @@ def min_newton(func, start, tol=1e-10, maxiter=100, bound_mode=False):
             while step[1] > up_diff:
                 step[1] *= 0.9
         x += step
-        print x, step
-        print H
+        path.append(copy.copy(x))
+        # print x, step
+        # print H
         if la.norm(step) < tol:
             improved = False
-    return x, niter
+    return x, niter, np.array(path)
 
 
 def min_quasi_newton(func, start, alpha=1e-6, tol=1e-8, maxiter=1e4):
     x = copy.copy(start)
+    path = [start]
     niter = 0
     improved = True
     G = np.identity(2)
@@ -332,12 +337,13 @@ def min_quasi_newton(func, start, alpha=1e-6, tol=1e-8, maxiter=1e4):
         x_prime = _partial2D(func, x)
         step = - alpha * np.dot(x_prime, G)
         x += step
+        path.append(copy.copy(x))
         if la.norm(step) < tol:
             improved = False
         gamma = _partial2D(func, x) - x_prime
         G += np.outer(step, step) / np.dot(gamma, step) \
             - np.dot(G, np.dot(np.outer(step, step), G)) / np.dot(gamma, np.dot(G, gamma))
-    return x, niter
+    return x, niter, np.array(path)
 
 
 def _curv(x, y):
@@ -359,8 +365,9 @@ def _curv(x, y):
     return (x[2]-x[1])*y[0]/d + (x[0]-x[2])*y[1]/d + (x[1]-x[0])*y[2]/d
 
 
-def std_error(func, x, method='curvature', decimals=4): #x being a list
-    x_min, y_min, xlist, ylist = min_parabolic(func, x)
+def std_error(func, x, method='curvature', decimals=4):  # x being a list
+    alist = copy.copy(x)
+    x_min, y_min, xlist, ylist = min_parabolic(func, alist)
     if method == 'curvature':
         a = _curv(xlist, ylist)
         return np.around(np.sqrt(1/(2*a)), decimals=decimals)
@@ -380,6 +387,3 @@ def std_error(func, x, method='curvature', decimals=4): #x being a list
         return np.around(x_p, decimals=decimals), np.around(x_n,  decimals=decimals)
     else:
         raise ValueError('Unknown method %s' % method)
-
-#print min_parabolic(nll1d, [0.4,0.42,0.39], 1e-5, t_m, sigma_m)
-#print std_error(nll1d, [0.39, 0.4, 0.41])

@@ -79,3 +79,4 @@ def curv(x,y):
 a = curv(final_xlist, final_ylist)
 print a
 print np.sqrt(1/(2*a))
+print pb.min_parabolic(pb.NLL,[0.4,0.3,0.5])
