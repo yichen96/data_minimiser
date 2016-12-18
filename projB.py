@@ -386,4 +386,4 @@ def std_error(func, x, method='curvature', decimals=4):  # x being a list
         x_n = x_min - x_down
         return np.around(x_p, decimals=decimals), np.around(x_n,  decimals=decimals)
     else:
-        raise ValueError('Unknown method %s' % method)
+        raise ValueError('Unknown method %s \nvalid methods are: \nscan \ncurvature' % method)
