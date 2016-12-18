@@ -20,7 +20,7 @@ for tau_i in tau_l:
 plt.xlim(-1.7, 4)
 plt.legend(labels, fontsize=17)
 plt.xlabel('t (picosecond)', fontsize=16)
-plt.ylabel('counts', fontsize=16)
+plt.ylabel('Probability density', fontsize=16)
 plt.title(r'Histogram of Measured $D^0$ Lifetime')
 
 # verify integral fit function over t is independent of tau and sigma

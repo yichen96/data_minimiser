@@ -51,13 +51,13 @@ line = slope*x_i+intercept
 ln_want = np.log(1e-3)  # the standard deviation that we want to achieve
 ln_result = (ln_want - intercept) / slope
 result = np.exp(ln_result)
-print 'to get accuracy of 10^-15 seconds, %.0e measurements would be needed' \
-      ' (approximated to 1 significant number).' % result
+print 'to get accuracy of 10^-15 seconds, %.1e measurements would be needed' \
+      ' (approximated to 2 significant number).' % result
 
 
 # plot the graph of data and fitting
 plt.plot(ln_n, ln_e, 'b.', label=r'$\ln{\sigma}$')
-plt.plot(x_i, line, 'r-', label='Linear Fit')
+plt.plot(x_i, line, 'r-', label=r'Linear Fit of $\ln{\sigma}$')
 plt.xlabel(r'$\ln{n}$', fontsize=16)
 plt.ylabel(r'$\ln{\sigma}$', fontsize=16)
 plt.text(7.6, -4.5, r'$\ln{\sigma} = %.2f \ln{n} %.2f $' % (slope, intercept), fontsize=19)
